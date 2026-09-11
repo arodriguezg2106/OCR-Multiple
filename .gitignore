@@ -1,0 +1,31 @@
+# Entornos, cachés y archivos locales
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.pytest-tmp*/
+.ruff_cache/
+.env
+.env.*
+!.env.example
+config.toml
+*.log
+*.sqlite*
+*.db
+*.pem
+*.key
+.DS_Store
+Thumbs.db
+
+# Documentos y evidencias locales de OCR
+ocr_masivo/Prueba/
+ocr_masivo/prueba_resultados/
+ocr_masivo/entrada/
+ocr_masivo/salida_pdf/
+ocr_masivo/texto/
+ocr_masivo/errores/
+ocr_masivo/logs/
+ocr_masivo/herramientas/tessdata/
+ocr_masivo/herramientas/tessdata_best/

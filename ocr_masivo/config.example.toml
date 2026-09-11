@@ -1,0 +1,18 @@
+[ocr]
+# Rutas relativas al archivo TOML. Use comillas simples para rutas Windows.
+entrada = 'entrada'
+salida = 'salida_pdf'
+texto = 'texto'
+errores = 'errores'
+logs = 'logs'
+idioma = "spa"
+modo = "skip"
+rotacion = true
+inclinacion = true
+tipo_salida = "pdf"
+optimizacion = 1
+timeout_pagina = 180
+workers = 2
+# megapixeles = 50
+generar_txt = true
+reintentar_fallidos = false

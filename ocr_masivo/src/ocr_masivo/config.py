@@ -13,13 +13,15 @@ class Config:
     idioma: str = "spa"
     modo: str = "skip"
     rotacion: bool = True
+    orientacion_robusta: bool = True
+    mejorar_escaneo: bool = True
     inclinacion: bool = True
     tipo_salida: str = "pdf"
     optimizacion: int = 1
     timeout_pagina: float = 180
-    workers: int = 2
+    workers: int = 1
     megapixeles: float | None = None
-    generar_txt: bool = True
+    generar_txt: bool = False
     reintentar_fallidos: bool = False
 
     def validate(self):

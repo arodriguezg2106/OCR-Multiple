@@ -30,7 +30,11 @@ def make_pdf(path, pages=1, text="Texto digital completo 123"):
 
 @pytest.fixture
 def env(tmp_path):
-    c = Config(**{k: tmp_path / k for k in ("entrada", "salida", "texto", "errores", "logs")}).validate()
+    c = Config(
+        workers=2,
+        generar_txt=True,
+        **{k: tmp_path / k for k in ("entrada", "salida", "texto", "errores", "logs")},
+    ).validate()
     c.entrada.mkdir()
     return c, Database(c.logs / "estado.sqlite3")
 

@@ -45,6 +45,10 @@ def command(config, source, target):
     ]
     if config.rotacion:
         args.append("--rotate-pages")
+    if (config.rotacion and config.orientacion_robusta) or config.mejorar_escaneo:
+        args.extend(["--plugin", "ocr_masivo.ocr_plugin"])
+    if config.mejorar_escaneo:
+        args.extend(["--oversample", "300"])
     if config.inclinacion:
         args.append("--deskew")
     if config.megapixeles is not None:
@@ -62,7 +66,12 @@ class OCRmyPDFEngine:
                 shell=False,
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0,
                 start_new_session=os.name != "nt",
-                env={**os.environ, "OMP_THREAD_LIMIT": "1"},
+                env={
+                    **os.environ,
+                    "OMP_THREAD_LIMIT": "1",
+                    "OCR_LOCAL_ORIENTACION": str(int(config.rotacion and config.orientacion_robusta)),
+                    "OCR_LOCAL_MEJORA": str(int(config.mejorar_escaneo)),
+                },
             )
             while proc.poll() is None:
                 # Finish the current isolated document on Ctrl+C; never orphan a child writing a partial.
@@ -156,6 +165,8 @@ def process_one(config, db, row, engine, stop):
         row.update(
             estado="completed", mensaje_error="" if chars else "Sin texto reconocido; revisar visualmente."
         )
+        if "para revisión" in message:
+            row["mensaje_error"] = "Orientación no concluyente en alguna página; revisar el PDF y el log."
         (config.errores / (row["ruta_relativa"] + ".error.json")).unlink(missing_ok=True)
     except InvalidPDF as exc:
         row.update(estado=exc.state, mensaje_error=str(exc))
@@ -228,7 +239,7 @@ def run_batch(config, db, only_failed=False, engine=None):
             pending.append(row)
         start = time.monotonic()
         with Progress(
-            SpinnerColumn(),
+            SpinnerColumn("line"),
             TextColumn("{task.description}"),
             BarColumn(),
             TextColumn("{task.percentage:>3.0f}%"),

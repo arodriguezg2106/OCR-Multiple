@@ -1,7 +1,7 @@
 param(
     [string]$Entrada,
     [string]$Salida,
-    [ValidateRange(1, 128)][int]$Workers = 2
+    [ValidateRange(1, 128)][int]$Workers = 1
 )
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
@@ -14,6 +14,9 @@ $ocrPython = Join-Path $PSScriptRoot '.venv\Scripts\python.exe'
 if (-not (Test-Path -LiteralPath $ocrPython)) {
     throw 'Cree el entorno primero: py -m venv .venv; instale requirements.txt según el README.'
 }
-& (Join-Path $PSScriptRoot '.venv\Scripts\Activate.ps1')
+$ocrTessdata = Join-Path $PSScriptRoot 'herramientas\tessdata'
+if (Test-Path -LiteralPath (Join-Path $ocrTessdata 'spa.traineddata')) {
+    $env:TESSDATA_PREFIX = $ocrTessdata
+}
 & $ocrPython -m ocr_masivo procesar --entrada $Entrada --salida $Salida --workers $Workers
 exit $LASTEXITCODE

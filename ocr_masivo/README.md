@@ -2,6 +2,22 @@
 
 Aplicación de consola para Windows y Python 3.11 o superior. Recorre subcarpetas, crea copias PDF buscables y extrae el texto completo de todas las páginas con PyMuPDF. SQLite guarda el estado por ruta absoluta y SHA-256 del original. El OCR se ejecuta localmente mediante OCRmyPDF y Tesseract: la aplicación no incluye conexiones de red ni carga documentos a servicios externos.
 
+## Uso sencillo: solo PDF con OCR (v1.1)
+
+La configuración predeterminada procesa un documento a la vez y no genera TXT. Conserva los registros mínimos de reanudación y errores. Para comenzar:
+
+```powershell
+.\ejecutar_ocr.ps1 -Entrada 'D:\MisPDF' -Salida 'D:\MisPDF_con_OCR'
+```
+
+Ahora se integra la orientación robusta en el OCR normal mediante una [extensión de OCRmyPDF](https://ocrmypdf.readthedocs.io/en/latest/plugins.html). Primero utiliza OSD; si su confianza es baja, compara cuatro giros en una vista previa limitada a 1800 píxeles por lado. Cada lectura tiene hasta 15 segundos y las cuatro comparten un presupuesto máximo de 60 segundos adicionales por página. Si hay empate, poca evidencia o timeout, conserva la orientación y registra una advertencia para revisión. Las páginas con texto se omiten en modo `skip`.
+
+Para escaneos pobres se solicita renderizado a un mínimo de 300 DPI (no recupera detalles ausentes del original). Solo en la imagen enviada al OCR se aplica gris y contraste suave 1.10 cuando su dispersión tonal es baja. No se borran bordes, líneas de tablas ni caracteres. Esta heurística no garantiza una mejora de exactitud; puede desactivarse con `--no-mejorar-escaneo`. Para utilizar únicamente la rotación estándar: `--no-orientacion-robusta`.
+
+El modo normal no ejecuta la calibración ni extrae campos contables. Las copias originales y los resultados históricos permanecen conservados. Los resultados completados que se reutilicen no se vuelven a reconocer automáticamente al cambiar opciones: para comparar mejoras utilice carpetas de salida y logs nuevas.
+
+Los TOML existentes conservan sus opciones explícitas: ajuste `workers = 1` y `generar_txt = false` si aún tienen los valores anteriores. Para pedir TXT expresamente use `--generar-txt`. La puntuación de 76,67 % corresponde a la calibración anterior; no es una medición de esta nueva combinación adaptativa.
+
 ## Instalación en Windows
 
 Abra PowerShell dentro de `ocr_masivo`. Se recomienda Python de 64 bits. La instalación de paquetes requiere internet, pero el procesamiento no.
@@ -39,7 +55,7 @@ OCRmyPDF puede encontrar Tesseract en ubicaciones estándar. Si usa una instalac
 python -m ocr_masivo diagnostico
 python -m ocr_masivo diagnostico --entrada 'D:\PruebaPDF' --salida 'D:\PruebaOCR'
 python -m ocr_masivo inventariar --entrada 'D:\PruebaPDF'
-python -m ocr_masivo procesar --entrada 'D:\PruebaPDF' --salida 'D:\PruebaOCR' --workers 2
+python -m ocr_masivo procesar --entrada 'D:\PruebaPDF' --salida 'D:\PruebaOCR' --workers 1
 ```
 
 Prepare manualmente una carpeta pequeña con copias de dos o tres PDF no firmados y revise visualmente los resultados. El diagnóstico consulta versiones, idiomas, rasterizador, carpetas, lectura del directorio, escritura y espacio libre. No ejecuta OCR. La lectura de cada documento se comprueba durante inventario/procesamiento. Devuelve código 1 si faltan requisitos.
@@ -47,7 +63,7 @@ Prepare manualmente una carpeta pequeña con copias de dos o tres PDF no firmado
 ## Procesamiento masivo
 
 ```powershell
-python -m ocr_masivo procesar --entrada 'D:\PDF_Originales' --salida 'D:\PDF_OCR' --workers 2
+python -m ocr_masivo procesar --entrada 'D:\PDF_Originales' --salida 'D:\PDF_OCR' --workers 1
 ```
 
 Empiece con dos documentos simultáneos. Cada proceso OCRmyPDF usa `--jobs 1` y `OMP_THREAD_LIMIT=1`. El planificador mantiene como máximo `workers` trabajos activos, sin crear miles de futuros. El inventario y las filas del lote se conservan en memoria; los PDF y TXT se leen por bloques o páginas.
@@ -55,7 +71,7 @@ Empiece con dos documentos simultáneos. Cada proceso OCRmyPDF usa `--jobs 1` y 
 También puede ejecutar:
 
 ```powershell
-.\ejecutar_ocr.ps1 -Entrada 'D:\PDF_Originales' -Salida 'D:\PDF_OCR' -Workers 2
+.\ejecutar_ocr.ps1 -Entrada 'D:\PDF_Originales' -Salida 'D:\PDF_OCR' -Workers 1
 ```
 
 El script solicita las rutas si no se proporcionan. Las pasa como argumentos, sin construir comandos a partir de su contenido.
@@ -66,7 +82,7 @@ Copie `config.example.toml` a `config.toml` y ajuste `[ocr]`. Las rutas relativa
 
 ```powershell
 python -m ocr_masivo procesar --config .\config.toml
-python -m ocr_masivo procesar --config .\config.toml --idioma spa+eng --workers 2
+python -m ocr_masivo procesar --config .\config.toml --idioma spa+eng --workers 1
 ```
 
 Las cinco carpetas de entrada, PDF, TXT, errores y logs deben ser distintas y no estar anidadas entre sí. Esto evita descubrir resultados como entradas y sobrescribir evidencia. No se recorren enlaces simbólicos ni uniones de directorios de entrada. Los nombres y subcarpetas se conservan en las salidas.

@@ -114,7 +114,14 @@ def parser():
         cmd.add_argument("--idioma")
         cmd.add_argument("--modo", choices=["skip", "redo", "force"])
         cmd.add_argument("--tipo-salida", choices=["pdf", "pdfa"])
-        for flag in ("rotacion", "inclinacion", "generar-txt", "reintentar-fallidos"):
+        for flag in (
+            "rotacion",
+            "orientacion-robusta",
+            "mejorar-escaneo",
+            "inclinacion",
+            "generar-txt",
+            "reintentar-fallidos",
+        ):
             cmd.add_argument(f"--{flag}", action=argparse.BooleanOptionalAction, default=None)
         cmd.add_argument("--workers", type=int)
         cmd.add_argument("--optimizacion", type=int)

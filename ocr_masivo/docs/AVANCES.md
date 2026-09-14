@@ -1,5 +1,11 @@
 # Avances de OCR Masivo Local
 
+## Actualización 1.1 — 14 de septiembre de 2026
+
+La orientación adaptativa ya está integrada en el procesamiento normal. OSD concluyente evita lecturas extra; cuando hay dudas se puntúan cuatro giros de una vista previa y se rechazan decisiones ambiguas. Se incorpora contraste conservador solo para OCR y renderizado mínimo a 300 DPI. Por defecto se genera PDF sin TXT y se utiliza un solo trabajador. Las referencias y la configuración A/B de la calibración anterior se conservan explícitamente; sus métricas no evalúan esta nueva combinación.
+
+Verificación de la integración: 55 pruebas automatizadas y una prueba real limitada a cuatro PDF de una página (dos escaneos sintéticos girados, una página digital y una página del estado analítico). Los cuatro terminaron, con texto horizontal, sin generar TXT y con el hash del documento original conservado. Esta prueba comprueba funcionamiento y orientación, no una nueva exactitud de los 60 campos.
+
 ## Funcionalidad implementada
 
 - OCR local con OCRmyPDF y Tesseract, PDF buscables y extracción de texto.

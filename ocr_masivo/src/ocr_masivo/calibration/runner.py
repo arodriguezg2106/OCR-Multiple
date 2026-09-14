@@ -97,7 +97,7 @@ def pdf_reading(project, output, page, profile, angle):
     temp = folder / "result.partial.pdf"
     target = folder / "result.pdf"
     start = time.monotonic()
-    cfg = Config()
+    cfg = Config(orientacion_robusta=False, mejorar_escaneo=False)
     args = command(cfg, sample, temp)
     with (folder / "stdout.log").open("wb") as stdout, (folder / "stderr.log").open("wb") as stderr:
         result = subprocess.run(

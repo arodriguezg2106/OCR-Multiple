@@ -1,5 +1,11 @@
 # Avances de OCR Masivo Local
 
+## Actualización 1.2 — rendimiento
+
+Se solicitan dos páginas simultáneas dentro de cada PDF, manteniendo un documento activo por defecto. La concurrencia efectiva se reduce al iniciar cada documento si la RAM libre o la CPU son insuficientes. Es una estimación conservadora de recursos, no una garantía de consumo máximo. No se cambian resolución, idioma, orientación ni contraste. La optimización de tamaño pasa a cero para ahorrar trabajo posterior; los PDF pueden ocupar más espacio. Los procesos ya iniciados conservan sus parámetros hasta terminar.
+
+Verificación: 33 pruebas de configuración, procesamiento y progreso aprobadas, junto con Ruff y compilación. En una prueba aislada de dos páginas sintéticas giradas, una ejecución con una página simultánea tardó 18,15 s y otra con dos tardó 16,95 s, con texto extraído idéntico por página. Ambas usaron optimización cero y las mismas opciones OCR. Es una única comparación bajo carga, no una predicción del rendimiento del lote. La memoria libre al inicio fue 2,35 y 2,44 GiB, respectivamente. Los registros de subprocess se escriben en UTF-8.
+
 ## Actualización 1.1 — 14 de septiembre de 2026
 
 La orientación adaptativa ya está integrada en el procesamiento normal. OSD concluyente evita lecturas extra; cuando hay dudas se puntúan cuatro giros de una vista previa y se rechazan decisiones ambiguas. Se incorpora contraste conservador solo para OCR y renderizado mínimo a 300 DPI. Por defecto se genera PDF sin TXT y se utiliza un solo trabajador. Las referencias y la configuración A/B de la calibración anterior se conservan explícitamente; sus métricas no evalúan esta nueva combinación.

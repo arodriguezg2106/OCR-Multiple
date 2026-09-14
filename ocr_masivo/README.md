@@ -2,7 +2,13 @@
 
 Aplicación de consola para Windows y Python 3.11 o superior. Recorre subcarpetas, crea copias PDF buscables y extrae el texto completo de todas las páginas con PyMuPDF. SQLite guarda el estado por ruta absoluta y SHA-256 del original. El OCR se ejecuta localmente mediante OCRmyPDF y Tesseract: la aplicación no incluye conexiones de red ni carga documentos a servicios externos.
 
-## Uso sencillo: solo PDF con OCR (v1.1)
+## Uso sencillo: solo PDF con OCR (v1.2)
+
+Para acelerar PDF largos, ahora se solicitan dos páginas simultáneas dentro de un solo documento. El lanzador acepta `-PaginasParalelas 2`; la CLI, `--paginas-paralelas 2`. Se conservan los mismos parámetros de reconocimiento y `OMP_THREAD_LIMIT=1` por proceso. La optimización de tamaño se desactiva por defecto (`optimizacion = 0`): puede aumentar el tamaño del PDF, sin cambiar la lectura OCR.
+
+Al empezar cada documento se consulta la RAM libre y la CPU. Se reserva aproximadamente 1 GiB y se presupuestan 0,65 GiB por página simultánea, repartidos entre trabajadores. Si no hay suficiente margen o no se puede consultar la RAM, se utiliza una página. Es una estimación, no un límite estricto de memoria: escaneos de gran tamaño pueden consumir más. El log informa la concurrencia efectiva. Cerrar aplicaciones puede permitir utilizar las dos páginas solicitadas.
+
+Una ejecución abierta conserva sus parámetros. Los cambios se aplican al volver a ejecutar el lanzador. Ctrl+C solicita terminar los documentos activos antes de detener el lote; cerrar la ventana a la fuerza pierde el trabajo del PDF incompleto, que deberá empezar de nuevo. La reanudación omite los PDF terminados y validados, pero no recupera páginas de un PDF todavía incompleto.
 
 La configuración predeterminada procesa un documento a la vez y no genera TXT. Conserva los registros mínimos de reanudación y errores. Para comenzar:
 
@@ -68,7 +74,7 @@ Prepare manualmente una carpeta pequeña con copias de dos o tres PDF no firmado
 python -m ocr_masivo procesar --entrada 'D:\PDF_Originales' --salida 'D:\PDF_OCR' --workers 1
 ```
 
-Empiece con dos documentos simultáneos. Cada proceso OCRmyPDF usa `--jobs 1` y `OMP_THREAD_LIMIT=1`. El planificador mantiene como máximo `workers` trabajos activos, sin crear miles de futuros. El inventario y las filas del lote se conservan en memoria; los PDF y TXT se leen por bloques o páginas.
+Empiece con un documento a la vez y hasta dos páginas simultáneas (`-PaginasParalelas 2` en el lanzador). `OMP_THREAD_LIMIT=1` limita cada proceso de Tesseract. El planificador mantiene como máximo `workers` documentos activos, sin crear miles de futuros. El inventario y las filas del lote se conservan en memoria; los PDF y TXT se leen por bloques o páginas.
 
 También puede ejecutar:
 

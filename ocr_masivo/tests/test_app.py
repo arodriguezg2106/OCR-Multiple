@@ -214,7 +214,7 @@ def test_single_failure_does_not_stop_batch_and_retry(env):
 def test_options_and_config(env, tmp_path):
     c, _ = env
     args = command(c, Path("original con espacio.pdf"), Path("temp.partial.pdf"))
-    assert args[args.index("--jobs") + 1] == "1"
+    assert args[args.index("--jobs") + 1] == "2"
     assert args[args.index("--mode") + 1] == "skip"
     assert "--invalidate-digital-signatures" not in args
     assert "--clean-final" not in args

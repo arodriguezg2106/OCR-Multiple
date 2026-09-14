@@ -8,6 +8,7 @@ import time
 import traceback
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from contextlib import ExitStack
+from dataclasses import replace
 from pathlib import Path
 from typing import Protocol
 
@@ -15,6 +16,7 @@ from rich.progress import BarColumn, SpinnerColumn, TextColumn, TimeElapsedColum
 
 from .inventory import inventory
 from .progress import BatchProgress, last_activity
+from .resources import available_memory, page_jobs
 from .utils import atomic_text, batch_lock, now, sha256, temporary
 from .validator import InvalidPDF, extract_text, inspect_pdf, validate_result
 
@@ -40,7 +42,7 @@ def command(config, source, target):
         "--optimize",
         str(config.optimizacion),
         "--jobs",
-        "1",
+        str(config.paginas_paralelas),
         "--tesseract-timeout",
         str(config.timeout_pagina),
     ]
@@ -59,9 +61,19 @@ def command(config, source, target):
 
 class OCRmyPDFEngine:
     def run(self, config, source, target, stdout, stderr, stop):
+        free = available_memory()
+        jobs = page_jobs(config.paginas_paralelas, config.workers, free, os.cpu_count() or 1)
+        effective = replace(config, paginas_paralelas=jobs)
         with stdout.open("wb") as out, stderr.open("wb") as err:
+            note = (
+                f"OCR local: {jobs} página(s) paralela(s); solicitadas {config.paginas_paralelas}; "
+                f"RAM libre {round(free / 2**30, 2) if free is not None else 'desconocida'} GiB.\n"
+            )
+            err.write(note.encode("utf-8"))
+            err.flush()
+            logging.info(note.strip())
             proc = subprocess.Popen(
-                command(config, source, target),
+                command(effective, source, target),
                 stdout=out,
                 stderr=err,
                 shell=False,
@@ -70,6 +82,7 @@ class OCRmyPDFEngine:
                 env={
                     **os.environ,
                     "OMP_THREAD_LIMIT": "1",
+                    "PYTHONIOENCODING": "utf-8",
                     "OCR_LOCAL_ORIENTACION": str(int(config.rotacion and config.orientacion_robusta)),
                     "OCR_LOCAL_MEJORA": str(int(config.mejorar_escaneo)),
                 },

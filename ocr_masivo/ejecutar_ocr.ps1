@@ -1,7 +1,8 @@
 param(
     [string]$Entrada,
     [string]$Salida,
-    [ValidateRange(1, 128)][int]$Workers = 1
+    [ValidateRange(1, 128)][int]$Workers = 1,
+    [ValidateRange(1, 8)][int]$PaginasParalelas = 2
 )
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
@@ -18,5 +19,5 @@ $ocrTessdata = Join-Path $PSScriptRoot 'herramientas\tessdata'
 if (Test-Path -LiteralPath (Join-Path $ocrTessdata 'spa.traineddata')) {
     $env:TESSDATA_PREFIX = $ocrTessdata
 }
-& $ocrPython -m ocr_masivo procesar --entrada $Entrada --salida $Salida --workers $Workers
+& $ocrPython -m ocr_masivo procesar --entrada $Entrada --salida $Salida --workers $Workers --paginas-paralelas $PaginasParalelas
 exit $LASTEXITCODE

@@ -124,6 +124,7 @@ def parser():
         ):
             cmd.add_argument(f"--{flag}", action=argparse.BooleanOptionalAction, default=None)
         cmd.add_argument("--workers", type=int)
+        cmd.add_argument("--paginas-paralelas", type=int)
         cmd.add_argument("--optimizacion", type=int)
         cmd.add_argument("--timeout-pagina", type=float)
         cmd.add_argument("--megapixeles", type=float)

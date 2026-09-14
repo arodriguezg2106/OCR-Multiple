@@ -17,9 +17,10 @@ class Config:
     mejorar_escaneo: bool = True
     inclinacion: bool = True
     tipo_salida: str = "pdf"
-    optimizacion: int = 1
+    optimizacion: int = 0
     timeout_pagina: float = 180
     workers: int = 1
+    paginas_paralelas: int = 2
     megapixeles: float | None = None
     generar_txt: bool = False
     reintentar_fallidos: bool = False
@@ -38,6 +39,8 @@ class Config:
             raise ValueError("Modo o tipo de salida inválido.")
         if self.workers < 1 or self.timeout_pagina <= 0 or self.optimizacion not in range(4):
             raise ValueError("Workers y timeout deben ser positivos; optimización debe estar entre 0 y 3.")
+        if not 1 <= self.paginas_paralelas <= 8:
+            raise ValueError("Páginas paralelas debe estar entre 1 y 8.")
         if self.megapixeles is not None and self.megapixeles <= 0:
             raise ValueError("Megapíxeles debe ser positivo.")
         if self.modo == "redo" and self.inclinacion:

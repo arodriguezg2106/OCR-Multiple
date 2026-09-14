@@ -22,6 +22,16 @@ from ocr_masivo.calibration.quality import choose_orientation, score_reading
 log = logging.getLogger(__name__)
 
 
+def upright_conclusive(reading):
+    """Accept an upright page early only when independent signals agree."""
+    return (
+        reading.get("confidence", 0) >= 45
+        and reading.get("alphanumeric", 0) >= 100
+        and reading.get("horizontal_word_ratio", 0) >= 0.80
+        and reading.get("plausible_ratio", 0) >= 0.15
+    )
+
+
 def read_preview(path, languages, timeout):
     executable = shutil.which("tesseract") or "C:/Program Files/Tesseract-OCR/tesseract.exe"
     result = subprocess.run(
@@ -70,9 +80,15 @@ class LocalEngine(TesseractOcrEngine):
                 path = Path(folder) / f"rotation-{angle}.png"
                 preview.rotate(angle, expand=True).save(path, dpi=(150, 150))
                 try:
-                    alternatives.append(
-                        dict(angle=angle, **read_preview(path, options.languages, min(15, remaining)))
-                    )
+                    reading = dict(angle=angle, **read_preview(path, options.languages, min(15, remaining)))
+                    alternatives.append(reading)
+                    if angle == 0 and upright_conclusive(reading):
+                        log.info(
+                            "Orientación local: lectura vertical normal concluyente; "
+                            "se omiten los otros tres giros: %s",
+                            json.dumps(reading),
+                        )
+                        return OrientationConfidence(0, threshold)
                 except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired) as exc:
                     log.warning("Orientación local: alternativa %s falló: %s", angle, exc)
                     break

@@ -33,6 +33,57 @@ def test_confident_osd_avoids_extra_ocr(monkeypatch, preview, options):
     assert plugin.LocalEngine.get_orientation(preview, options).angle == 90
 
 
+def test_strong_upright_read_avoids_other_three_rotations(monkeypatch, preview, options):
+    original = preview.read_bytes()
+    calls = []
+    monkeypatch.setattr(plugin.TesseractOcrEngine, "get_orientation", lambda *a: OrientationConfidence(0, 5))
+
+    def read(path, languages, timeout):
+        calls.append(path.name)
+        return dict(
+            score=150,
+            confidence=80,
+            alphanumeric=900,
+            horizontal_word_ratio=0.98,
+            plausible_ratio=0.25,
+        )
+
+    monkeypatch.setattr(plugin, "read_preview", read)
+    assert plugin.LocalEngine.get_orientation(preview, options) == (0, 15)
+    assert calls == ["rotation-0.png"]
+    assert preview.read_bytes() == original
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"confidence": 44},
+        {"alphanumeric": 99},
+        {"horizontal_word_ratio": 0.79},
+        {"plausible_ratio": 0.14},
+    ],
+)
+def test_weak_upright_signal_still_uses_all_rotations(monkeypatch, preview, options, change):
+    calls = []
+    monkeypatch.setattr(plugin.TesseractOcrEngine, "get_orientation", lambda *a: OrientationConfidence(0, 5))
+    base = dict(
+        score=100,
+        confidence=80,
+        alphanumeric=900,
+        horizontal_word_ratio=0.98,
+        plausible_ratio=0.25,
+    )
+
+    def read(path, languages, timeout):
+        angle = int(path.stem.split("-")[1])
+        calls.append(angle)
+        return {**base, **change, "score": 200 if angle == 90 else 100}
+
+    monkeypatch.setattr(plugin, "read_preview", read)
+    assert plugin.LocalEngine.get_orientation(preview, options).angle == 90
+    assert calls == [0, 90, 180, 270]
+
+
 @pytest.mark.parametrize("angle", [0, 90, 180, 270])
 def test_fallback_rotation_and_preservation(monkeypatch, preview, options, angle):
     original = preview.read_bytes()

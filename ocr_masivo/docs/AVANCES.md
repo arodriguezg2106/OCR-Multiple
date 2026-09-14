@@ -1,5 +1,9 @@
 # Avances de OCR Masivo Local
 
+## Actualización 1.3 — orientación escalonada
+
+El análisis de orientación deja de ejecutar incondicionalmente cuatro lecturas. Una primera lectura normal se acepta solamente si supera simultáneamente umbrales de confianza, caracteres, palabras horizontales y patrones plausibles. Ante una señal débil se conservan las cuatro alternativas y la selección robusta anterior. En las imágenes reales de control, una página normal necesitó una lectura y una imagen girada 90° necesitó cuatro y eligió correctamente 270° de corrección. El lote que ya tenga abierto OCRmyPDF termina ese documento con el código cargado al inicio; los procesos de documentos siguientes cargan la versión actualizada.
+
 ## Actualización 1.2 — rendimiento
 
 Se solicitan dos páginas simultáneas dentro de cada PDF, manteniendo un documento activo por defecto. La concurrencia efectiva se reduce al iniciar cada documento si la RAM libre o la CPU son insuficientes. Es una estimación conservadora de recursos, no una garantía de consumo máximo. No se cambian resolución, idioma, orientación ni contraste. La optimización de tamaño pasa a cero para ahorrar trabajo posterior; los PDF pueden ocupar más espacio. Los procesos ya iniciados conservan sus parámetros hasta terminar.

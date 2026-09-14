@@ -2,7 +2,9 @@
 
 Aplicación de consola para Windows y Python 3.11 o superior. Recorre subcarpetas, crea copias PDF buscables y extrae el texto completo de todas las páginas con PyMuPDF. SQLite guarda el estado por ruta absoluta y SHA-256 del original. El OCR se ejecuta localmente mediante OCRmyPDF y Tesseract: la aplicación no incluye conexiones de red ni carga documentos a servicios externos.
 
-## Uso sencillo: solo PDF con OCR (v1.2)
+## Uso sencillo: solo PDF con OCR (v1.3)
+
+La orientación funciona de forma escalonada. Tras OSD, analiza primero la posición normal. Si coinciden confianza, cantidad de texto, geometría horizontal y patrones plausibles, conserva la página y omite los otros tres giros. Si cualquiera de esas señales es débil, prueba 90°, 180° y 270° y compara las cuatro lecturas. Así se mantiene la comprobación completa en páginas dudosas o giradas y se reduce el coste de las páginas claramente normales.
 
 Para acelerar PDF largos, ahora se solicitan dos páginas simultáneas dentro de un solo documento. El lanzador acepta `-PaginasParalelas 2`; la CLI, `--paginas-paralelas 2`. Se conservan los mismos parámetros de reconocimiento y `OMP_THREAD_LIMIT=1` por proceso. La optimización de tamaño se desactiva por defecto (`optimizacion = 0`): puede aumentar el tamaño del PDF, sin cambiar la lectura OCR.
 

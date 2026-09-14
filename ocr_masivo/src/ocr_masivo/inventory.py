@@ -30,10 +30,12 @@ def discover(root):
                 yield path
 
 
-def inventory(config, db):
+def inventory(config, db, on_progress=None):
     rows = []
     for path in discover(config.entrada):
         relative = path.relative_to(config.entrada).as_posix()
+        if on_progress:
+            on_progress(len(rows) + 1, relative)
         key = hashlib.sha256(str(path).encode("utf-8")).hexdigest()
         row = dict(
             id=key,

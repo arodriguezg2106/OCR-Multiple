@@ -11,9 +11,10 @@ from contextlib import ExitStack
 from pathlib import Path
 from typing import Protocol
 
-from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.progress import BarColumn, SpinnerColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn
 
 from .inventory import inventory
+from .progress import BatchProgress, last_activity
 from .utils import atomic_text, batch_lock, now, sha256, temporary
 from .validator import InvalidPDF, extract_text, inspect_pdf, validate_result
 
@@ -212,7 +213,14 @@ def run_batch(config, db, only_failed=False, engine=None):
         previous = {r["id"]: r for r in db.rows()}
         for row in previous.values():
             cleanup_owned(config, row)
-        rows = inventory(config, db)
+        with BatchProgress(SpinnerColumn("line"), TextColumn("{task.description}")) as scan:
+            scan.add_task("Inventariando PDF y verificando originales...", total=None)
+
+            def on_inventory(count, relative):
+                scan.status = f"Inventario: {count} PDF encontrados; leyendo archivo y calculando hash"
+                scan.activity = relative
+
+            rows = inventory(config, db, on_progress=on_inventory)
         db.setting("config", config.serialize())
         db.setting("active_ids", [r["id"] for r in rows])
         pending = []
@@ -238,14 +246,17 @@ def run_batch(config, db, only_failed=False, engine=None):
                 continue
             pending.append(row)
         start = time.monotonic()
-        with Progress(
+        with BatchProgress(
             SpinnerColumn("line"),
             TextColumn("{task.description}"),
-            BarColumn(),
+            BarColumn(bar_width=20),
             TextColumn("{task.percentage:>3.0f}%"),
+            TextColumn("Tiempo:"),
             TimeElapsedColumn(),
+            TextColumn("Restante aprox.:"),
+            TimeRemainingColumn(compact=True),
         ) as progress:
-            task = progress.add_task("Preparando", total=len(rows), completed=len(rows) - len(pending))
+            task = progress.add_task("Lote", total=len(rows), completed=len(rows) - len(pending))
             iterator = iter(pending)
             with ThreadPoolExecutor(max_workers=config.workers) as pool:
                 futures = {}
@@ -267,15 +278,18 @@ def run_batch(config, db, only_failed=False, engine=None):
                             submit_next()
                         completed = sum(r["estado"] in SUCCESSES for r in rows)
                         failed = sum(r["estado"] in FAILURES for r in rows)
-                        names = ", ".join(r["ruta_relativa"] for r in futures.values())
-                        progress.update(
-                            task,
-                            description=(
-                                f"Total {len(rows)} | Completados {completed} | "
-                                f"Fallidos {failed} | Pendientes {len(rows) - completed - failed} | "
-                                f"{completed / max(time.monotonic() - start, 1):.2f} doc/s | {names}"
-                            ),
+                        progress.status = (
+                            f"Total {len(rows)} | Completados {completed} | "
+                            f"Fallidos {failed} | Pendientes {len(rows) - completed - failed}"
                         )
+                        progress.activity = "\n".join(
+                            f"Archivo: {r['ruta_relativa']}\n"
+                            f"{last_activity((config.logs / r['id']).with_suffix('.stderr.log'))}"
+                            for r in futures.values()
+                        )
+                        if progress.tasks[task].time_remaining is None and futures:
+                            progress.activity += "\nEstimación pendiente: esperando documentos terminados."
+                        progress.refresh()
                 except KeyboardInterrupt:
                     stop.set()
                     progress.console.print(

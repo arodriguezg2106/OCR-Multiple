@@ -6,6 +6,8 @@ Aplicación de consola para Windows y Python 3.11 o superior. Recorre subcarpeta
 
 La configuración predeterminada procesa un documento a la vez y no genera TXT. Conserva los registros mínimos de reanudación y errores. Para comenzar:
 
+Durante el inventario se muestra el archivo que se está leyendo. Durante OCR, los contadores, barra y tiempos aparecen separados del nombre del archivo. El tiempo restante necesita documentos terminados y es aproximado: no conoce cuánto tardará cada PDF. La última página observada en el log indica actividad, no una página finalizada; la barra avanza al terminar y validar documentos completos. Las mejoras de pantalla se aplican al iniciar una nueva ejecución, sin modificar procesos ya abiertos.
+
 ```powershell
 .\ejecutar_ocr.ps1 -Entrada 'D:\MisPDF' -Salida 'D:\MisPDF_con_OCR'
 ```

@@ -20,6 +20,8 @@ La fase 2 extrae importes, fechas, folios, referencias, cuentas, CLABE, RFC, CUR
 
 La captura también concilia señales repetidas dentro del mismo expediente: puede completar nombres por consenso de RFC o CURP, recuperar folios desde nombres de archivo y contrastar importes de póliza con cheques o transferencias. Los campos completados se identifican en `extra`; una inferencia sin corroboración permanece con confianza media.
 
+La fase 3 relaciona pólizas, cheques, lotes de transferencia, recibos de nómina y movimientos bancarios. Consolida las representaciones de un mismo pago, conserva la regla que justificó cada vínculo y separa las coincidencias ambiguas. Consulte los [resultados agregados de la fase 3](docs/RESULTADOS_FASE_3.md).
+
 ## Ejecutar
 
 Desde PowerShell:
@@ -60,8 +62,25 @@ Los resultados se guardan en `resultados_fase2`:
 - `valores_recurrentes.csv`: RFC, CURP, cuentas, CLABE, UUID y folios recurrentes.
 - `extraccion_fase2.sqlite3`: base estructurada completa.
 
+Para construir la trazabilidad desde la base de fase 2 más reciente:
+
+```powershell
+.\ejecutar_fase3.ps1
+```
+
+Los resultados se guardan en `resultados_fase3`:
+
+- `trazabilidad_documental.html`: explorador de operaciones relacionadas y enlaces a su evidencia.
+- `trazabilidad_operaciones.csv`: una fila por operación o caso consolidado.
+- `vinculos_trazabilidad.csv`: relaciones aceptadas y sugeridas con puntuación y reglas.
+- `vinculos_sugeridos.csv`: alternativas ambiguas para revisión.
+- `pendientes_trazabilidad.csv`: pagos para los que aún falta una contraparte documental.
+- `cobertura_trazabilidad.csv`: cobertura de relación por tipo de registro.
+- `resumen_trazabilidad_por_mes.csv`: control mensual sin duplicar etapas del mismo pago.
+- `trazabilidad.sqlite3`: base autocontenida de casos, vínculos y registros de origen.
+
 ## Límites
 
 La clasificación y las fechas dependen del texto OCR. Un resultado con confianza alta significa que varias reglas coincidieron; no certifica el contenido ni una operación contable. Los CSV conservan rutas y advertencias para revisar el PDF. La base y los resultados contienen información del expediente y están excluidos de Git.
 
-Una suma candidata no equivale a un total contable: una misma operación puede aparecer como póliza, cheque y movimiento bancario. La fase 3 relacionará esas representaciones sin sumarlas varias veces, conservando evidencia y niveles de confianza.
+Una suma candidata no equivale a un total contable. La fase 3 evita sumar varias veces las etapas del mismo pago, pero mantiene separados el detalle individual de nómina y los lotes que pueden agrupar muchos recibos.

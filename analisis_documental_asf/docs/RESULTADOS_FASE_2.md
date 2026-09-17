@@ -53,4 +53,4 @@ Los registros se consolidan con identificadores fuertes cuando están disponible
 
 `revision_fase2.csv` concentra campos incompletos o señales afectadas por OCR. La extracción conserva el valor leído y no sobrescribe silenciosamente nombres, CURP, RFC, cuentas o referencias. Todo valor completado mediante otra evidencia queda marcado con su método y soporte en la columna `extra`.
 
-Los importes agregados se denominan **sumas candidatas**. No deben sumarse entre tipos: el mismo pago puede aparecer en la póliza, el cheque, la transferencia y el estado de cuenta. La fase 3 debe relacionar esas representaciones mediante importe, fecha, folio, cuenta y beneficiario para construir la trazabilidad y evitar dobles conteos.
+Los importes agregados se denominan **sumas candidatas**. No deben sumarse entre tipos: el mismo pago puede aparecer en la póliza, el cheque, la transferencia y el estado de cuenta. La [fase 3](RESULTADOS_FASE_3.md) relaciona esas representaciones mediante importe, fecha, folio, cuenta, beneficiario y cercanía documental para construir la trazabilidad y evitar dobles conteos.

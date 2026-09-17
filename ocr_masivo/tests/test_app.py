@@ -235,6 +235,18 @@ def test_lock_and_cli(env):
     assert main(["inventariar", "--entrada", str(c.entrada), "--logs", str(c.logs)]) == 0
 
 
+def test_resume_loads_saved_paths_and_retries_failures_stably(env):
+    c, db = env
+    c.paginas_paralelas = 2
+    db.setting("config", c.serialize())
+    assert main(["reanudar", "--logs", str(c.logs), "--paginas-paralelas", "1"]) == 0
+    saved = db.setting("config")
+    assert saved["entrada"] == str(c.entrada)
+    assert saved["salida"] == str(c.salida)
+    assert saved["paginas_paralelas"] == 1
+    assert saved["reintentar_fallidos"] is True
+
+
 def test_python_exception_is_recorded(env):
     c, db = env
     make_pdf(c.entrada / "a.pdf")

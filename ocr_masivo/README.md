@@ -20,6 +20,14 @@ Durante el inventario se muestra el archivo que se está leyendo. Durante OCR, l
 .\ejecutar_ocr.ps1 -Entrada 'D:\MisPDF' -Salida 'D:\MisPDF_con_OCR'
 ```
 
+Para continuar un lote interrumpido sin volver a escribir las rutas:
+
+```powershell
+.\reanudar_ocr.ps1
+```
+
+El comando recupera las carpetas del último lote guardado en `logs/estado.sqlite3`, verifica los resultados terminados y procesa pendientes, interrumpidos y fallidos. De forma predeterminada reanuda con una página simultánea para favorecer la estabilidad después de un cierre o de fallos transitorios. No reinicia los PDF ya completados y validados. Si no existe una base anterior en esa carpeta de logs, se detiene con un mensaje; no adivina rutas.
+
 Ahora se integra la orientación robusta en el OCR normal mediante una [extensión de OCRmyPDF](https://ocrmypdf.readthedocs.io/en/latest/plugins.html). Primero utiliza OSD; si su confianza es baja, compara cuatro giros en una vista previa limitada a 1800 píxeles por lado. Cada lectura tiene hasta 15 segundos y las cuatro comparten un presupuesto máximo de 60 segundos adicionales por página. Si hay empate, poca evidencia o timeout, conserva la orientación y registra una advertencia para revisión. Las páginas con texto se omiten en modo `skip`.
 
 Para escaneos pobres se solicita renderizado a un mínimo de 300 DPI (no recupera detalles ausentes del original). Solo en la imagen enviada al OCR se aplica gris y contraste suave 1.10 cuando su dispersión tonal es baja. No se borran bordes, líneas de tablas ni caracteres. Esta heurística no garantiza una mejora de exactitud; puede desactivarse con `--no-mejorar-escaneo`. Para utilizar únicamente la rotación estándar: `--no-orientacion-robusta`.

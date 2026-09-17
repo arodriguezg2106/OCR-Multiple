@@ -106,7 +106,7 @@ def diagnostic(config):
 def parser():
     p = argparse.ArgumentParser(description="OCR Masivo Local — originales de solo lectura")
     sub = p.add_subparsers(dest="command", required=True)
-    for name in ("diagnostico", "inventariar", "procesar", "reintentar", "reporte"):
+    for name in ("diagnostico", "inventariar", "procesar", "reanudar", "reintentar", "reporte"):
         cmd = sub.add_parser(name)
         cmd.add_argument("--config", type=Path)
         for path in ("entrada", "salida", "texto", "errores", "logs"):
@@ -143,11 +143,15 @@ def main(argv=None):
         if args.command == "diagnostico":
             return diagnostic(config)
         db = Database(config.logs / "estado.sqlite3")
-        if args.command in {"reintentar", "reporte"} and not args.config:
+        if args.command in {"reanudar", "reintentar", "reporte"} and not args.config:
             saved = db.setting("config")
             if saved:
                 saved.update({k: v for k, v in overrides.items() if v is not None})
                 config = Config(**saved).validate()
+            elif args.command == "reanudar":
+                raise ValueError("No existe un lote anterior en la carpeta de logs indicada.")
+        if args.command == "reanudar":
+            config.reintentar_fallidos = True
         logging.basicConfig(
             filename=config.logs / "ocr_masivo.log",
             level=logging.INFO,
@@ -162,7 +166,7 @@ def main(argv=None):
                 db.setting("active_ids", [r["id"] for r in rows])
                 report(config, db, rows)
             console.print(f"Inventario: {len(rows)} PDF. Registro: {db.path}")
-        elif args.command in {"procesar", "reintentar"}:
+        elif args.command in {"procesar", "reanudar", "reintentar"}:
             rows = run_batch(config, db, only_failed=args.command == "reintentar")
             path, summary = report(config, db, rows)
             console.print(summary)

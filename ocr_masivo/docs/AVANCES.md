@@ -1,5 +1,9 @@
 # Avances de OCR Masivo Local
 
+## Actualización 1.3.1 — reanudación del lote
+
+Se añadió `reanudar_ocr.ps1`. Recupera la configuración guardada, convierte un estado `processing` interrumpido en pendiente, omite resultados completados que superen las comprobaciones de hash y estructura, e incluye los fallos anteriores para reintento. La reanudación usa una página simultánea por defecto debido a errores transitorios observados con dos páginas concurrentes. El lote de referencia conservaba 469 completados, 42 pendientes, 1 interrumpido y 26 fallidos antes de reanudar.
+
 ## Actualización 1.3 — orientación escalonada
 
 El análisis de orientación deja de ejecutar incondicionalmente cuatro lecturas. Una primera lectura normal se acepta solamente si supera simultáneamente umbrales de confianza, caracteres, palabras horizontales y patrones plausibles. Ante una señal débil se conservan las cuatro alternativas y la selección robusta anterior. En las imágenes reales de control, una página normal necesitó una lectura y una imagen girada 90° necesitó cuatro y eligió correctamente 270° de corrección. El lote que ya tenga abierto OCRmyPDF termina ese documento con el código cargado al inicio; los procesos de documentos siguientes cargan la versión actualizada.

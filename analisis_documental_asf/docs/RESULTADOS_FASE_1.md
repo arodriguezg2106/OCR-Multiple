@@ -36,4 +36,4 @@ El tipo principal describe el expediente. Cada registro conserva además todos l
 
 La carpeta `resultados` contiene el informe HTML, los CSV por documento, mes y tipo, y el índice SQLite de texto por página. Esa carpeta está excluida de Git porque contiene rutas, texto y datos de los expedientes.
 
-La clasificación usa el nombre y señales del contenido. Es un inventario operativo y no sustituye la validación documental o contable. La fase 2 puede partir del índice FTS5 para extraer importes, folios, cuentas, beneficiarios y referencias sin repetir el OCR.
+La clasificación usa el nombre y señales del contenido. Es un inventario operativo y no sustituye la validación documental o contable. La fase 2 ya utiliza el índice FTS5 para extraer importes, folios, cuentas, beneficiarios y referencias sin repetir el OCR; consulte sus [resultados](RESULTADOS_FASE_2.md).

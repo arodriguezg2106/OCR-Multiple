@@ -16,6 +16,8 @@ La clasificación es explicable y multietiqueta. El tipo principal resume el exp
 
 La primera aplicación al lote de 2021 catalogó 538 PDF y 13,729 páginas sin advertencias. Consulte el [resultado agregado de la fase 1](docs/RESULTADOS_FASE_1.md). Los informes detallados permanecen sólo en este equipo dentro de `resultados`.
 
+La fase 2 extrae importes, fechas, folios, referencias, cuentas, CLABE, RFC, CURP, UUID, beneficiarios y conceptos. Construye registros de recibos de nómina, cheques, pólizas u órdenes de pago, lotes de transferencia y movimientos bancarios. Cada registro conserva la página y el fragmento OCR utilizado como evidencia. Consulte los [resultados agregados de la fase 2](docs/RESULTADOS_FASE_2.md).
+
 ## Ejecutar
 
 Desde PowerShell:
@@ -38,8 +40,26 @@ También puede indicar otras rutas:
 .\ejecutar_catalogo.ps1 -BaseOCR 'D:\Lote\logs\estado.sqlite3' -Salida 'D:\Catalogo'
 ```
 
+Para ejecutar la fase 2 después de construir el catálogo:
+
+```powershell
+.\ejecutar_fase2.ps1
+```
+
+Los resultados se guardan en `resultados_fase2`:
+
+- `extraccion_documental.html`: explorador con filtros y enlaces a la página del PDF.
+- `registros_estructurados.csv`: una fila por registro consolidado.
+- `datos_extraidos.csv`: entidades candidatas con fragmento de evidencia.
+- `revision_fase2.csv`: registros incompletos o de confianza media.
+- `resumen_registros_por_mes.csv`: conteos e importes candidatos por mes y tipo.
+- `resumen_nomina_por_persona.csv`: recibos e importes netos candidatos por persona.
+- `resumen_importes_por_tipo.csv`: importes candidatos por tipo de registro.
+- `valores_recurrentes.csv`: RFC, CURP, cuentas, CLABE, UUID y folios recurrentes.
+- `extraccion_fase2.sqlite3`: base estructurada completa.
+
 ## Límites
 
 La clasificación y las fechas dependen del texto OCR. Un resultado con confianza alta significa que varias reglas coincidieron; no certifica el contenido ni una operación contable. Los CSV conservan rutas y advertencias para revisar el PDF. La base y los resultados contienen información del expediente y están excluidos de Git.
 
-La fase 2 utilizará el índice por página para extraer importes, folios, cuentas, beneficiarios y referencias. La fase 3 relacionará documentos conservando evidencia y niveles de confianza.
+Una suma candidata no equivale a un total contable: una misma operación puede aparecer como póliza, cheque y movimiento bancario. La fase 3 relacionará esas representaciones sin sumarlas varias veces, conservando evidencia y niveles de confianza.

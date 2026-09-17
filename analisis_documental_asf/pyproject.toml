@@ -14,6 +14,7 @@ dev = ["pytest>=8", "ruff>=0.9"]
 
 [project.scripts]
 analisis-asf = "analisis_documental_asf.cli:main"
+analisis-asf-fase2 = "analisis_documental_asf.phase2_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -8,13 +8,13 @@ import os
 import re
 import sqlite3
 import tempfile
-from collections import defaultdict
+from collections import Counter, defaultdict
 from decimal import Decimal
 from pathlib import Path
 
 from .extraction import extract_entities, extract_records
 
-EXTRACTION_SCHEMA_VERSION = 1
+EXTRACTION_SCHEMA_VERSION = 2
 
 
 def atomic_text(path, value):
@@ -185,11 +185,56 @@ def build(source_database, output_database, progress=print):
                     for field in record_fields:
                         if field not in {"extra", "record_key"} and not existing.get(field) and item.get(field):
                             existing[field] = item[field]
+                    for field, value in item["extra"].items():
+                        if field != "evidence_pages" and value and not existing["extra"].get(field):
+                            existing["extra"][field] = value
                     if existing["confidence"] == "media" and item["confidence"] == "alta":
                         existing["confidence"] = "alta"
                 entity_count += len(entities)
                 if position == 1 or position % 250 == 0 or position == total_pages:
                     progress(f"{position}/{total_pages} páginas · {document['relative_path']}")
+            names_by_identity = defaultdict(Counter)
+            for item in records_by_key.values():
+                if item["record_type"] != "recibo_nomina" or not item["beneficiary"]:
+                    continue
+                for identity in (item["curp"], item["rfc"]):
+                    if identity:
+                        names_by_identity[identity][item["beneficiary"]] += 1
+            for item in records_by_key.values():
+                if item["record_type"] != "recibo_nomina" or item["beneficiary"]:
+                    continue
+                candidates = Counter()
+                for identity in (item["curp"], item["rfc"]):
+                    candidates.update(names_by_identity.get(identity, {}))
+                if candidates:
+                    inferred_name, support = candidates.most_common(1)[0]
+                    item["beneficiary"] = inferred_name
+                    item["extra"].setdefault("inferred_fields", {})["beneficiary"] = {
+                        "method": "identity_consensus",
+                        "support": support,
+                    }
+            supporting_records = defaultdict(lambda: defaultdict(list))
+            for item in records_by_key.values():
+                if item["record_type"] in {"cheque", "lote_transferencia"} and item["amount"]:
+                    supporting_records[item["document_id"]][item["amount"]].append(item)
+            for item in records_by_key.values():
+                if item["record_type"] != "poliza_orden_pago" or not item["amount"]:
+                    continue
+                support = supporting_records[item["document_id"]].get(item["amount"], [])
+                if support:
+                    item["confidence"] = "alta"
+                    item["extra"]["amount_cross_support"] = sorted(
+                        {candidate["record_type"] for candidate in support}
+                    )
+                    if not item["beneficiary"]:
+                        payees = Counter(candidate["beneficiary"] for candidate in support if candidate["beneficiary"])
+                        if payees:
+                            inferred_name, count = payees.most_common(1)[0]
+                            item["beneficiary"] = inferred_name
+                            item["extra"].setdefault("inferred_fields", {})["beneficiary"] = {
+                                "method": "corroborating_record",
+                                "support": count,
+                            }
             target.executemany(
                 record_sql,
                 [

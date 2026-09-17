@@ -280,10 +280,11 @@ def payroll_record(document, page_number, text):
 def cheque_payee(text):
     folded = fold(text)
     match = re.search(r"PAGUESE[^\n]{0,60}CHEQUE[^\n]{0,60}?(?:A|DE)\s*:\s*([^\n]*)", folded)
-    candidates = re.findall(r"A\s+FAVOR\s+DE\s*:\s*\n?\s*([^\n]{3,100})", folded)
+    candidates = []
     if match:
         candidates.append(match.group(1))
         candidates.extend(folded[match.end() :].splitlines()[:4])
+    candidates.extend(re.findall(r"A\s+FAVOR\s+DE\s*:\s*\n?\s*([^\n]{3,100})", folded))
     for candidate in candidates:
         candidate = clean_space(candidate)
         if not candidate or "FECHA" in candidate:
@@ -292,7 +293,12 @@ def cheque_payee(text):
             r"\s+(?:[A-Z+<>|\[\]]{0,12}\s*)?\d{1,3}(?:,\d{3})*\.\d{2}", candidate, maxsplit=1
         )[0]
         candidate = clean_space(candidate)
-        if len(candidate) >= 4 and re.search(r"[A-Z]{3}", candidate):
+        if (
+            len(candidate) >= 4
+            and re.search(r"[A-Z]{3}", candidate)
+            and not re.match(r"\d", candidate)
+            and not any(word in candidate for word in ("PESO", "MONEDA NACIONAL", "CUENTA NO"))
+        ):
             return candidate[:100]
     return ""
 
@@ -305,10 +311,14 @@ def cheque_record(document, page_number, text):
     cheque = first_group(r"\bCH\s*[:;-]?\s*[-A-Z ]*?(\d{1,8})", folded) or first_group(
         r"CHEQUE\s+NUMERO\s+(\d{1,8})", folded
     )
+    if not cheque:
+        cheque = first_group(r"(?:^|[/\\])CH[- _](\d{1,8})", document["relative_path"])
     payee_position = re.search(r"PAGUESE[^\n]{0,100}CHEQUE", folded)
     amount = ""
     if payee_position:
-        amount_match = MONEY.search(folded, payee_position.start(), min(len(folded), payee_position.start() + 500))
+        amount_match = MONEY.search(
+            folded, max(0, payee_position.start() - 250), min(len(folded), payee_position.start() + 500)
+        )
         if amount_match:
             amount = format(money_value(amount_match.group(1)), ".2f")
     if not amount:
@@ -375,17 +385,62 @@ def policy_record(document, page_number, text):
     if not folio:
         return None
     total = first_money(r"\bTOTAL\s*\$?\s*(\$?\s*\d[\d, ]*\.\d{2})", folded)
+    amount_method = "labeled_total" if total else ""
+    amount_occurrences = 1 if total else 0
+    amounts = [money_value(item) for item in MONEY.findall(text)]
+    counts = Counter(item for item in amounts if item is not None and item > 0)
+    repeated = [(count, value) for value, count in counts.items() if count >= 2]
+    if repeated:
+        amount_occurrences, value = max(repeated, key=lambda item: (item[0], -item[1]))
+        total = format(value, ".2f")
+        amount_method = "repeated_ledger_amount"
     beneficiary = first_group(r"AUXILIAR\s+([^\n]{3,100})", folded)
     beneficiary = clean_space(beneficiary.split("ESTATUS", 1)[0])
+    beneficiary_method = "auxiliar_label" if beneficiary else ""
+    beneficiary_occurrences = 1 if beneficiary else 0
+    if not beneficiary:
+        candidates = Counter(
+            clean_space(value)
+            for value in re.findall(r"\(([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ ]{4,100})\)", folded)
+            if len(clean_space(value).split()) >= 2
+            and not any(
+                word in value
+                for word in (
+                    "PAGADO",
+                    "PEGADO",
+                    "EJERCIDO",
+                    "DEVENGADO",
+                    "AUTORIZADA",
+                    "MUNICIPIO DE EMILIANO ZAPATA",
+                )
+            )
+        )
+        if candidates:
+            beneficiary, beneficiary_occurrences = candidates.most_common(1)[0]
+            beneficiary_method = "parenthetical_candidate"
     concept = first_group(r"OBSERVACIONES\s+([^\n]{5,300})", folded)
-    record = base_record("poliza_orden_pago", document, page_number, "alta" if total else "media", text[:1800])
+    operation_date = ""
+    for match in DATE_NUMERIC.finditer(folded):
+        candidate = normalized_date(*match.groups())
+        if candidate and (not document.get("month_number") or int(candidate[5:7]) == document["month_number"]):
+            operation_date = candidate
+            break
+    confidence = "alta" if total and amount_method == "labeled_total" else "media"
+    record = base_record("poliza_orden_pago", document, page_number, confidence, text[:1800])
     record.update(
         {
-            "operation_date": parse_date_text(first_group(r"FECHA\s+TRAMITE\s*:\s*([^\n]{5,30})", folded)),
+            "operation_date": operation_date
+            or parse_date_text(first_group(r"FECHA\s+TRAMITE\s*:\s*([^\n]{5,30})", folded)),
             "amount": total,
             "beneficiary": beneficiary,
             "folio": folio,
             "concept": concept,
+            "extra": {
+                "amount_method": amount_method,
+                "amount_occurrences": amount_occurrences,
+                "beneficiary_method": beneficiary_method,
+                "beneficiary_occurrences": beneficiary_occurrences,
+            },
         }
     )
     record["record_key"] = record_key("poliza_orden_pago", document["id"], folio)

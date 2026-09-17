@@ -18,6 +18,8 @@ La primera aplicación al lote de 2021 catalogó 538 PDF y 13,729 páginas sin a
 
 La fase 2 extrae importes, fechas, folios, referencias, cuentas, CLABE, RFC, CURP, UUID, beneficiarios y conceptos. Construye registros de recibos de nómina, cheques, pólizas u órdenes de pago, lotes de transferencia y movimientos bancarios. Cada registro conserva la página y el fragmento OCR utilizado como evidencia. Consulte los [resultados agregados de la fase 2](docs/RESULTADOS_FASE_2.md).
 
+La captura también concilia señales repetidas dentro del mismo expediente: puede completar nombres por consenso de RFC o CURP, recuperar folios desde nombres de archivo y contrastar importes de póliza con cheques o transferencias. Los campos completados se identifican en `extra`; una inferencia sin corroboración permanece con confianza media.
+
 ## Ejecutar
 
 Desde PowerShell:

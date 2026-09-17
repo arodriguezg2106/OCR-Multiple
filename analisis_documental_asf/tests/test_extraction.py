@@ -73,6 +73,13 @@ POR CONCEPTO DE: PAGO MENSUAL DE AGENTE MUNICIPAL
         "Páguese por este cheque a la orden de:\nARTURO AMAYA GUTIÉRREZ $ 4,251.00\nCH: 274",
     )[0]
     assert duplicate["record_key"] == record["record_key"]
+    filename_document = dict(DOCUMENT, relative_path="11. Noviembre/CH-428.pdf")
+    filename_folio = extract_records(
+        filename_document,
+        6,
+        "Sirva pagar la orden a favor de:\nJUAN CARLOS HERNANDEZ PEREZ\nCantidad $ 4,122.66",
+    )[0]
+    assert filename_folio["folio"] == "428"
     statement = """
 Estado de Cuenta
 12/MAR 12/MAR T17 SPEI ENVIADO SANTANDER 39,986.20
@@ -85,6 +92,24 @@ ANA PAULINA MARTINEZ MURGUIA
     assert movement["operation_date"] == "2021-03-12"
     assert movement["amount"] == "39986.20"
     assert movement["reference"].startswith("0000656247")
+
+
+def test_policy_uses_repeated_ledger_amount_and_folder_month_date():
+    policy = """
+PÓLIZAS DE PAGO FOLIO: P202107000161
+Fecha de impresión: 09/08/2021
+EG202107310 CH-274 PAGO POR 30/07/2021 Remuneraciones (ARTURO AMAYA GUTIERREZ) $4,251.00
+EG202107310 CH-274 PAGO POR 30/07/2021 Retribuciones (Pagado) $4,251.00
+PARTICIPACIONES 2021 (ARTURO AMAYA GUTIERREZ) $4,251.00
+TOTAL $8,502.00 $8,502.00
+"""
+    document = dict(DOCUMENT, month_number=7)
+    record = next(item for item in extract_records(document, 1, policy) if item["record_type"] == "poliza_orden_pago")
+    assert record["amount"] == "4251.00"
+    assert record["operation_date"] == "2021-07-30"
+    assert record["beneficiary"] == "ARTURO AMAYA GUTIERREZ"
+    assert record["extra"]["amount_method"] == "repeated_ledger_amount"
+    assert record["confidence"] == "media"
 
 
 def test_bank_year_uses_dominant_document_dates():

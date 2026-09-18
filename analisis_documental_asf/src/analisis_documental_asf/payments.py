@@ -372,6 +372,30 @@ def confirmed_findings(rows, matches):
                 "detail": "Cheque y lote de transferencia muestran $111,577.00.",
             }
         )
+    # Row 64 is labelled PARTICIP. in the workbook, while cheque 612 explicitly says ARBITRIOS 2020.
+    if (
+        64 in by_number
+        and by_number[64]["amount"] == Decimal("38916.16")
+        and match_by_number.get(64, {}).get("matched_path") == "2. Febrero/Pago de laudo por sentencia.pdf"
+    ):
+        row = by_number[64]
+        findings.append(
+            {
+                "kind": "origen_documental_distinto",
+                "excel_rows": "64",
+                "account": row["account"],
+                "current_amount": row["amount"],
+                "proposed_amount": Decimal("0.00"),
+                "adjustment": -row["amount"],
+                "confidence": "media",
+                "affects_confirmed_total": False,
+                "evidence": "2. Febrero/Pago de laudo por sentencia.pdf, página 5",
+                "detail": (
+                    "El cheque 612 indica ARBITRIOS 2020 y la hoja indica PARTICIP.; "
+                    "si se excluye, quedan $677.64 por debajo del objetivo."
+                ),
+            }
+        )
     confirmed_rows = {
         int(value)
         for item in findings

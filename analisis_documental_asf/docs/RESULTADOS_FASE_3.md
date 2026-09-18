@@ -79,3 +79,5 @@ Los ajustes con evidencia fuerte son:
 - Las filas 126/127, 409/410, 416/417 y 424/425 repiten cuenta, mes, importe y concepto, y cada par apunta al mismo documento. Conservar una sola fila de cada par resta $140,103.00.
 
 Estas correcciones explican errores concretos, pero no prueban por s? solas el total esperado: despu?s de aplicarlas, la relaci?n queda $38,238.52 por encima. El archivo `hallazgos_relacion_pagos.csv` tambi?n separa las diferencias entre el importe de la hoja y el importe pagado en cheque o transferencia. Esas diferencias permanecen como revisi?n porque algunas p?lizas registran importe bruto y el cheque registra importe neto; no se deben aplicar al total sin fijar primero la base contable del objetivo.
+
+La fila 64 aporta una pista para el saldo restante: la hoja clasifica $38,916.16 como `PARTICIP.`, pero el cheque 612 de `Pago de laudo por sentencia.pdf`, página 5, indica `ARBITRIOS 2020`. Si ese pago se excluye del universo esperado, el total corregido queda $677.64 por debajo del objetivo. Esta relación aritmética es una hipótesis de revisión; hace falta confirmar qué fuentes de financiamiento abarca el total esperado antes de aplicarla.

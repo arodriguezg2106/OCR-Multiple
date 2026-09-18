@@ -98,6 +98,6 @@ Una suma candidata no equivale a un total contable. La fase 3 evita sumar varias
 ### Resultados del cruce de pagos
 
 - `conciliacion_relacion_pagos.html`: resumen del total, ajustes sustentados y filas pendientes.
-- `cruce_relacion_pagos.csv`: las filas del Excel con documento, p?gina, importe y confianza.
+- `cruce_relacion_pagos.csv`: las filas del Excel con documento, página, importe y confianza.
 - `hallazgos_relacion_pagos.csv`: errores, duplicados y diferencias de importe con su evidencia.
 - `resumen_relacion_pagos.json`: cifras de control reproducibles del cruce.

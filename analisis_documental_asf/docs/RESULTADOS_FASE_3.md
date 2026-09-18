@@ -58,3 +58,24 @@ La conciliación automática exige evidencia fuerte. Usa números de cheque enco
 El importe del caso se elige una sola vez con prioridad al movimiento bancario, transferencia, cheque y póliza. Así no se suman como operaciones distintas las representaciones del mismo pago. Los importes diferentes entre etapas se conservan y se señalan en el informe; pueden corresponder a importes brutos, descuentos, retenciones o errores OCR.
 
 Los totales de nómina y los pagos por lote se mantienen como grupos distintos. No debe sumarse un total general entre ambos, porque una transferencia de nómina puede contener muchos recibos individuales. Los vínculos sugeridos y los 815 pagos pendientes son la cola de revisión para ampliar la trazabilidad cuando existan más estados de cuenta o se corrijan datos OCR.
+
+## Cruce con la relaci?n de pagos
+
+Se analizaron las 520 filas de `Relaci?n de pagos.xlsx` contra los 9,558 registros con evidencia de la fase 2. El cruce vincul? autom?ticamente 501 filas con un PDF y dej? 19 sin un v?nculo suficientemente fuerte. La copia de la fuente se identifica mediante SHA-256 y el archivo original no se modific?.
+
+| Control | Importe |
+| --- | ---: |
+| Total almacenado por Excel | $45,422,056.12 |
+| Total esperado informado | $45,436,913.58 |
+| Diferencia inicial | $14,857.46 |
+| Ajustes con evidencia fuerte | $53,095.98 |
+| Total despu?s de esos ajustes | $45,475,152.10 |
+| Diferencia pendiente contra el objetivo | -$38,238.52 |
+
+Los ajustes con evidencia fuerte son:
+
+- La fila 349 contiene `93.198.98` como texto. El cheque y el lote de `POLIZA0140.pdf` muestran $93,198.98, pero la suma de Excel excluye esa celda.
+- La fila 395 contiene $11,577.00. El cheque y el lote de `POLIZA0193.pdf`, p?ginas 8 y 9, muestran $111,577.00.
+- Las filas 126/127, 409/410, 416/417 y 424/425 repiten cuenta, mes, importe y concepto, y cada par apunta al mismo documento. Conservar una sola fila de cada par resta $140,103.00.
+
+Estas correcciones explican errores concretos, pero no prueban por s? solas el total esperado: despu?s de aplicarlas, la relaci?n queda $38,238.52 por encima. El archivo `hallazgos_relacion_pagos.csv` tambi?n separa las diferencias entre el importe de la hoja y el importe pagado en cheque o transferencia. Esas diferencias permanecen como revisi?n porque algunas p?lizas registran importe bruto y el cheque registra importe neto; no se deben aplicar al total sin fijar primero la base contable del objetivo.

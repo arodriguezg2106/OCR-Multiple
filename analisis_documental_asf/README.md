@@ -22,6 +22,8 @@ La captura también concilia señales repetidas dentro del mismo expediente: pue
 
 La fase 3 relaciona pólizas, cheques, lotes de transferencia, recibos de nómina y movimientos bancarios. Consolida las representaciones de un mismo pago, conserva la regla que justificó cada vínculo y separa las coincidencias ambiguas. Consulte los [resultados agregados de la fase 3](docs/RESULTADOS_FASE_3.md).
 
+La relación externa de pagos también puede cruzarse con las pólizas, cheques y transferencias de la fase 2. El proceso conserva una copia de lectura, no modifica el Excel original y agrega las tablas `external_payment_rows` y `external_payment_links` a la base de trazabilidad.
+
 ## Ejecutar
 
 Desde PowerShell:
@@ -68,6 +70,14 @@ Para construir la trazabilidad desde la base de fase 2 más reciente:
 .\ejecutar_fase3.ps1
 ```
 
+Para cruzar `Relación de pagos.xlsx` con la evidencia documental y el total esperado:
+
+```powershell
+.\ejecutar_cruce_pagos.ps1 -Objetivo 45436913.58
+```
+
+Puede indicar otra hoja con `-Relacion`. El script puede leerla aunque esté abierta en Excel y guarda una copia dentro de `resultados_fase3\fuentes`.
+
 Los resultados se guardan en `resultados_fase3`:
 
 - `trazabilidad_documental.html`: explorador de operaciones relacionadas y enlaces a su evidencia.
@@ -84,3 +94,10 @@ Los resultados se guardan en `resultados_fase3`:
 La clasificación y las fechas dependen del texto OCR. Un resultado con confianza alta significa que varias reglas coincidieron; no certifica el contenido ni una operación contable. Los CSV conservan rutas y advertencias para revisar el PDF. La base y los resultados contienen información del expediente y están excluidos de Git.
 
 Una suma candidata no equivale a un total contable. La fase 3 evita sumar varias veces las etapas del mismo pago, pero mantiene separados el detalle individual de nómina y los lotes que pueden agrupar muchos recibos.
+
+### Resultados del cruce de pagos
+
+- `conciliacion_relacion_pagos.html`: resumen del total, ajustes sustentados y filas pendientes.
+- `cruce_relacion_pagos.csv`: las filas del Excel con documento, p?gina, importe y confianza.
+- `hallazgos_relacion_pagos.csv`: errores, duplicados y diferencias de importe con su evidencia.
+- `resumen_relacion_pagos.json`: cifras de control reproducibles del cruce.
